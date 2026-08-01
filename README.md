@@ -82,7 +82,7 @@ Layout and colors: `include/ui/radar_theme.h`.
 | 5 km / 3 nm | ~6.7 km |
 | 10 km / 5 nm | ~13.3 km (default) |
 | 15 km / 8 nm | ~20 km |
-| 25 km / 14 nm | ~33.3 km |
+| 25 km / 13 nm | ~33.3 km |
 
 Preset and nm/km display choice persist across reboot (`planeradar` NVS namespace).
 
