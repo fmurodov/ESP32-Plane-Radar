@@ -39,6 +39,7 @@ constexpr gpio_num_t kDisplayPinDc = GPIO_NUM_21;    // XIAO D3
 constexpr gpio_num_t kDisplayPinMosi = GPIO_NUM_18;  // XIAO D10
 constexpr gpio_num_t kDisplayPinSclk = GPIO_NUM_19;  // XIAO D8
 constexpr gpio_num_t kDisplayPinBl = GPIO_NUM_16;    // XIAO D6, backlight enable (active HIGH)
+constexpr int kDisplayRotation = 3;  // -90° from the panel's default orientation
 #else
 // Bare GC9A01 module manually wired to an ESP32-C3 Super Mini
 constexpr gpio_num_t kDisplayPinRst = GPIO_NUM_0;
@@ -47,6 +48,7 @@ constexpr gpio_num_t kDisplayPinDc = GPIO_NUM_10;
 constexpr gpio_num_t kDisplayPinMosi = GPIO_NUM_3;  // display SDA
 constexpr gpio_num_t kDisplayPinSclk = GPIO_NUM_4;  // display SCL
 constexpr gpio_num_t kDisplayPinBl = GPIO_NUM_NC;   // backlight tied directly to 3V3
+constexpr int kDisplayRotation = 0;
 #endif
 
 constexpr int kDisplayWidth = 240;
