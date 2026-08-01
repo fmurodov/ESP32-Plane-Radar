@@ -2,7 +2,7 @@
 
 <img width="800" height="450" alt="plane-radar" src="https://github.com/user-attachments/assets/716d0992-dab8-47ba-8f1a-2aec7f607419" />
 
-**3D printed case (STL + assembly):** [MakerWorld](https://makerworld.com/en/models/2872376-esp32-plane-radar-live-ads-b-on-a-round-display#profileId-3207083) · **Firmware:** [Releases](https://github.com/MatixYo/ESP32-Plane-Radar/releases)
+**3D printed case (STL + assembly):** [MakerWorld](https://makerworld.com/en/models/2872376-esp32-plane-radar-live-ads-b-on-a-round-display#profileId-3207083) · **Firmware:** [Releases](https://github.com/fmurodov/ESP32-Plane-Radar/releases)
 
 Firmware for a **1.28″ round GC9A01** display (240×240), on either an **ESP32-C3 Super Mini** (bare display module, manual wiring) or a **Seeed XIAO ESP32-C6** with the **Seeed "Round Display for XIAO"** (direct plug-in connector). Shows a circular **ADS-B radar** around your configured location, with **WiFiManager** for first-time setup.
 
@@ -255,3 +255,7 @@ Download the one matching your board from **Releases** on GitHub, then flash at 
 - [LovyanGFX](https://github.com/lovyan03/LovyanGFX)
 - [WiFiManager](https://github.com/tzapu/WiFiManager)
 - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+
+---
+
+This project is a fork of [MatixYo/ESP32-Plane-Radar](https://github.com/MatixYo/ESP32-Plane-Radar).
