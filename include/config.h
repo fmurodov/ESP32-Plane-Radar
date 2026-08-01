@@ -56,7 +56,9 @@ constexpr gpio_num_t kDisplayPinCs = GPIO_NUM_1;     // XIAO D1
 constexpr gpio_num_t kDisplayPinDc = GPIO_NUM_21;    // XIAO D3
 constexpr gpio_num_t kDisplayPinMosi = GPIO_NUM_18;  // XIAO D10
 constexpr gpio_num_t kDisplayPinSclk = GPIO_NUM_19;  // XIAO D8
-constexpr gpio_num_t kDisplayPinBl = GPIO_NUM_16;    // XIAO D6, backlight enable (active HIGH)
+// XIAO D6, backlight enable (active HIGH). Board's ON/KE slide switch (by the microSD slot)
+// must have the D6 side enabled, or this pin is disconnected from the backlight entirely.
+constexpr gpio_num_t kDisplayPinBl = GPIO_NUM_16;
 constexpr int kDisplayRotation = 3;  // -90° from the panel's default orientation
 #else
 // Bare GC9A01 module manually wired to an ESP32-C3 Super Mini

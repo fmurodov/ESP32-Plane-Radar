@@ -186,13 +186,19 @@ reference/troubleshooting only (from Seeed's `Seeed_Arduino_RoundDisplay` refere
 | Backlight enable | D6 | GPIO16 |
 | BOOT (user) | — | GPIO9 (onboard XIAO button) |
 
+> **Board switch:** the display has a 2-position slide switch (labeled **ON** / **KE**, near the
+> microSD slot) with both slides needing to be set to their enabled side. Either slide left on the
+> "digital" side disconnects D6 (backlight) and/or A0 (battery-voltage sense) and frees them as
+> plain GPIO instead — if screen brightness doesn't respond to the portal setting at all (works in
+> serial log, no visible change), check this switch first before suspecting firmware.
+
 The display also carries a PCF8563 RTC on the same shared I2C bus (SDA = D4/GPIO22, SCL =
 D5/GPIO23) — not currently used by this firmware. The CHSC6X touch controller (also on this bus,
 INT = D7/GPIO17) *is* used — see [Touch controls](#touch-controls-round-display-for-xiao-only) above.
 
-> Confirmed working on real hardware: display and WiFi. Touch is new and not yet tested on
-> hardware. If colors look inverted or swapped, adjust `kDisplayInvert` / `kDisplayRgbOrder` in
-> `config.h`.
+> Confirmed working on real hardware: display, WiFi, and brightness. Touch is new and not yet
+> tested on hardware. If colors look inverted or swapped, adjust `kDisplayInvert` /
+> `kDisplayRgbOrder` in `config.h`.
 
 ## Build
 
