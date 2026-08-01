@@ -61,6 +61,7 @@ The same portal runs on the setup AP and on the device’s LAN IP while connecte
 | **Display distances in miles** | Ring scale label in **mi** instead of **km** (e.g. `6mi` vs `10km`) |
 | **Show airport runways** | Major-airport runway overlay on the radar (off to hide) |
 | **Screen brightness (10-100%)** | Applies immediately on save; defaults to 100%. Handy for dimming at night. |
+| **Local ADS-B receiver aircraft.json URL** | Blank (default) uses adsb.fi over the internet. Set to a local readsb/dump1090 `aircraft.json` URL (e.g. `http://192.168.1.50:8080/data/aircraft.json`) to use your own receiver instead — same per-aircraft JSON fields, so no other change needed. The firmware filters to the current range itself, since a local receiver returns everything it can hear (often far past this radar's max range), unlike adsb.fi which is filtered server-side. |
 
 After a reset, the device reboots and shows the setup screen immediately (no “Connecting” loop on stale credentials).
 
@@ -101,7 +102,8 @@ As range decreases (or aircraft approach), targets move inward; beyond-ring dots
 
 ### ADS-B
 
-- Source: `https://opendata.adsb.fi/api/v3/`
+- Source: [adsb.fi](https://opendata.adsb.fi/) by default, or a local readsb/dump1090 receiver if
+  configured in the portal (see **Custom fields** above)
 - Fetch radius: `ui::radar::fetchRadiusKm()` — scales with the active preset to roughly the screen edge (so rim dots have data)
 - Poll interval: `kAdsbFetchIntervalMs` (5 s) in `config.h`
 - Ground aircraft hidden by default (`kAdsbShowGroundAircraft`)

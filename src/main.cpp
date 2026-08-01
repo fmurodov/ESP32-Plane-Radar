@@ -114,6 +114,7 @@ void setup() {
   }
   services::location::init();
   ui::radar::rangeInit();
+  services::adsb::sourceInit();
   services::adsb::setPollFn(wifiLoop);
 
   if (wifiSetupConnect()) {

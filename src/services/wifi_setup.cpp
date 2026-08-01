@@ -15,6 +15,7 @@
 
 #include "config.h"
 #include "hardware/display.h"
+#include "services/adsb_client.h"
 #include "services/radar_location.h"
 #include "ui/radar_range.h"
 #include "ui/status_screens.h"
@@ -91,6 +92,9 @@ constexpr char kBrightnessInputAttrs[] =
 WiFiManagerParameter s_param_brightness("brightness", "Screen brightness (10-100%)", "100",
                                         kBrightnessParamLen, kBrightnessInputAttrs);
 
+WiFiManagerParameter s_param_adsb_url("adsb_url", "Local ADS-B receiver aircraft.json URL (blank = adsb.fi)",
+                                      "", services::adsb::kLocalUrlMaxLen);
+
 void refreshPortalParamDefaults() {
   char lat_buf[kCoordParamLen + 1];
   char lon_buf[kCoordParamLen + 1];
@@ -107,6 +111,7 @@ void refreshPortalParamDefaults() {
   char brightness_buf[kBrightnessParamLen + 1];
   snprintf(brightness_buf, sizeof(brightness_buf), "%u", displayBrightnessPercent());
   s_param_brightness.setValue(brightness_buf, kBrightnessParamLen);
+  s_param_adsb_url.setValue(services::adsb::localUrl(), services::adsb::kLocalUrlMaxLen);
 }
 
 void onPortalParamsSaved() {
@@ -117,6 +122,7 @@ void onPortalParamsSaved() {
   ui::radar::saveMilesFromPortal(s_param_miles.getValue());
   ui::radar::saveRunwaysFromPortal(s_param_runways.getValue());
   displaySaveBrightnessFromPortal(s_param_brightness.getValue());
+  services::adsb::saveLocalUrlFromPortal(s_param_adsb_url.getValue());
 }
 
 void attachPortalParams(WiFiManager& wm) {
@@ -126,6 +132,7 @@ void attachPortalParams(WiFiManager& wm) {
   wm.addParameter(&s_param_miles);
   wm.addParameter(&s_param_runways);
   wm.addParameter(&s_param_brightness);
+  wm.addParameter(&s_param_adsb_url);
   wm.setSaveParamsCallback(onPortalParamsSaved);
 }
 
@@ -204,7 +211,8 @@ void resetWifiCredentials() {
   services::location::clear();
   ui::radar::unitsReset();
   displayResetBrightness();
-  Serial.println("WiFi credentials, location, units, and brightness cleared");
+  services::adsb::clearLocalUrl();
+  Serial.println("WiFi credentials, location, units, brightness, and ADS-B source cleared");
 }
 
 void onConfigPortalApStarted(WiFiManager*) {
