@@ -208,7 +208,7 @@ void resetWifiCredentials() {
 }
 
 void onConfigPortalApStarted(WiFiManager*) {
-  WiFi.setTxPower(WIFI_POWER_8_5dBm);
+  WiFi.setTxPower(static_cast<wifi_power_t>(config::kWifiTxPowerQuarterDbm));
   statusScreenPortal();
 #ifdef WM_MDNS
   if (MDNS.begin(config::kPortalHostname)) {
@@ -228,10 +228,17 @@ bool wifiLinkUp() {
          WiFi.localIP() != IPAddress(0, 0, 0, 0);
 }
 
+/** Diagnostic only: logs why the radio dropped (reason codes in esp_wifi_types.h,
+ * e.g. 2=AUTH_EXPIRE, 8=ASSOC_LEAVE, 200=BEACON_TIMEOUT, 201=NO_AP_FOUND, 204=AUTH_FAIL). */
+void logWifiDisconnected(arduino_event_id_t /*event*/, arduino_event_info_t info) {
+  Serial.printf("WiFi disconnected (reason=%u)\n", info.wifi_sta_disconnected.reason);
+}
+
 void ensureWifiManager() {
   if (s_wm_configured) {
     return;
   }
+  WiFi.onEvent(logWifiDisconnected, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
   s_wm.setConfigPortalTimeout(config::kWifiPortalTimeoutSec);
   s_wm.setAPStaticIPConfig(IPAddress(192, 168, 4, 1), IPAddress(192, 168, 4, 1),
                            IPAddress(255, 255, 255, 0));
@@ -271,7 +278,7 @@ void stopLanWebPortal() {
 }
 
 void prepareSta() {
-  WiFi.setTxPower(WIFI_POWER_8_5dBm);
+  WiFi.setTxPower(static_cast<wifi_power_t>(config::kWifiTxPowerQuarterDbm));
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(WIFI_PS_NONE);
   WiFi.setAutoReconnect(true);

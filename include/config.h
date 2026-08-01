@@ -18,10 +18,28 @@ constexpr unsigned long kWifiConnectAttemptMs = 15000;
 constexpr uint8_t kWifiConnectAttempts = 3;
 constexpr unsigned long kWifiPortalTimeoutSec = 0;  // 0 = no timeout while configuring
 constexpr unsigned long kWifiConnectingFrameMs = 50;
-/** Wait after disconnect before reconnecting (avoids portal on brief drops). */
-constexpr unsigned long kWifiDownGraceMs = 4000;
+/**
+ * Wait after disconnect before forcing a fresh WiFi.begin() (avoids portal on brief
+ * drops). Must comfortably outlast the radio's own built-in auto-reconnect (enabled via
+ * WiFi.setAutoReconnect(true)) — too short and the manual retry calls WiFi.begin() while
+ * auto-reconnect is still mid-attempt, which the driver rejects (ESP_ERR_WIFI_STATE:
+ * "sta is connecting, cannot set config") and can prolong the outage instead of fixing it.
+ */
+constexpr unsigned long kWifiDownGraceMs = 20000;
 /** Minimum interval between background reconnect tries. */
 constexpr unsigned long kWifiReconnectIntervalMs = 15000;
+
+/**
+ * STA/AP TX power, in quarter-dBm units (matches the WIFI_POWER_x enum values, e.g. 80 =
+ * 20dBm) — kept as a plain int here so config.h doesn't need to pull in WiFi headers.
+ */
+#if defined(PLANE_RADAR_BOARD_XIAO_C6_ROUND)
+constexpr int8_t kWifiTxPowerQuarterDbm = 80;  // 20dBm; no known brownout issue on this board
+#else
+// 8.5dBm: fixes a brownout on the ESP32-C3 Super Mini's weaker onboard regulator — don't raise
+// this without retesting on that board.
+constexpr int8_t kWifiTxPowerQuarterDbm = 34;
+#endif
 
 // --- BOOT button (ESP32-C3 Super Mini, active LOW) ---
 constexpr gpio_num_t kBootPin = GPIO_NUM_9;
