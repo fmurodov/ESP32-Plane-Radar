@@ -58,7 +58,7 @@ The same portal runs on the setup AP and on the device’s LAN IP while connecte
 | Field | Purpose |
 |-------|---------|
 | **Latitude / Longitude** | Radar center and ADS-B query position (defaults in `config.h` until set) |
-| **Display distances in nautical miles (nm)** | Ring scale label in **nm** (default) or **km** if unchecked (e.g. `5nm` vs `10km`). The ADS-B query itself always uses nm regardless of this setting — it only controls what's shown on screen. |
+| **Display distances in km** | Ring shows **nm** by default (e.g. `5nm`); check this to show **km** instead (e.g. `10km`). The ADS-B query itself always uses nm regardless of this setting — it only controls what's shown on screen. |
 | **Show airport runways** | Major-airport runway overlay on the radar (off to hide) |
 | **Screen brightness (10-100%)** | Applies immediately on save; defaults to 100%. Handy for dimming at night. |
 | **ADS-B API base URL** | Blank (default) uses adsb.fi. Override with the base URL of any provider using the same `<base>lat/<lat>/lon/<lon>/dist/<dist_nm>` query shape and JSON response (e.g. adsb.lol, ADSBExchange, or a self-hosted equivalent) — e.g. `https://opendata.adsb.fi/api/v3/` (the default) or `https://your-host/v2/`. `lat/<lat>/lon/...` is appended automatically; don't include it. |

@@ -99,8 +99,8 @@ bool useNm() { return s_use_nm; }
 
 bool showRunways() { return s_show_runways; }
 
-void saveNmFromPortal(const char* checkbox_value) {
-  s_use_nm = portalCheckboxChecked(checkbox_value);
+void saveKmFromPortal(const char* checkbox_value) {
+  s_use_nm = !portalCheckboxChecked(checkbox_value);
   saveUseNm();
   Serial.printf("Distance units: %s\n", s_use_nm ? "nm" : "km");
 }

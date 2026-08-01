@@ -45,10 +45,11 @@ uint8_t rangeIndex();
 /** ADSB fetch radius (km): scaled to screen edge so beyond-ring dots have data. */
 float fetchRadiusKm();
 
+/** True = show nm on the ring label (the default); false = km. */
 bool useNm();
 bool showRunways();
-/** WiFi portal checkbox: "T" = nautical miles, otherwise km. */
-void saveNmFromPortal(const char* checkbox_value);
+/** WiFi portal checkbox: nm is the default, so "T" here opts into km instead. */
+void saveKmFromPortal(const char* checkbox_value);
 void saveRunwaysFromPortal(const char* checkbox_value);
 void formatRing3Label(char* buf, size_t len, float ring3_km, bool use_nm);
 void formatCurrentRing3Label(char* buf, size_t len);
