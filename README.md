@@ -79,10 +79,10 @@ Layout and colors: `include/ui/radar_theme.h`.
 
 | Ring 3 label | Outer radius (aircraft scale) |
 |------------|-------------------------------|
-| 5 km / 3 nm | ~6.7 km |
-| 10 km / 5 nm | ~13.3 km (default) |
-| 15 km / 8 nm | ~20 km |
-| 25 km / 13 nm | ~33.3 km |
+| 5 km / 3 nm | ~6.7 km / 3.6 nm |
+| 10 km / 5 nm | ~13.3 km / 7.2 nm (default) |
+| 15 km / 8 nm | ~20 km / 10.8 nm |
+| 25 km / 13 nm | ~33.3 km / 18 nm |
 
 Preset and nm/km display choice persist across reboot (`planeradar` NVS namespace).
 
