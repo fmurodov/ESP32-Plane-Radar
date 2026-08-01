@@ -26,15 +26,15 @@ using PollFn = void (*)();
 void setPollFn(PollFn fn);
 
 /** Fetch aircraft within fetch_radius_km of center_lat/lon, appending
- * "<lat>/lon/<lon>/dist/<dist_nm>" to the configured API base (see apiBase()). */
+ * "lat/<lat>/lon/<lon>/dist/<dist_nm>" to the configured API base (see apiBase()). */
 bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km);
 
 /** Load saved API base URL from NVS, or empty (use the default, adsb.fi). Call once before
  * WiFi setup. */
 void sourceInit();
-/** Empty = default (adsb.fi); non-empty = base URL up to and including ".../lat/" for any
- * provider using the same "<base><lat>/lon/<lon>/dist/<dist_nm>" query shape and JSON schema
- * (e.g. a self-hosted adsb.fi/adsb.lol-API-compatible service). */
+/** Empty = default (adsb.fi); non-empty = base URL (e.g. "https://host/v2/") for any provider
+ * using the same "<base>lat/<lat>/lon/<lon>/dist/<dist_nm>" query shape and JSON schema (e.g.
+ * adsb.lol, ADSBExchange, or a self-hosted equivalent). */
 const char* apiBase();
 /** WiFi portal text field: API base URL override, or empty to use the default. */
 void saveApiBaseFromPortal(const char* url);

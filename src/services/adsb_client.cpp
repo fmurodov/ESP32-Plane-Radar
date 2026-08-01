@@ -15,7 +15,7 @@ namespace services::adsb {
 
 namespace {
 
-constexpr char kDefaultApiBase[] = "https://opendata.adsb.fi/api/v3/lat/";
+constexpr char kDefaultApiBase[] = "https://opendata.adsb.fi/api/v3/";
 constexpr float kKmPerNm = 1.852f;
 constexpr int kConnectAttemptMs = 200;
 constexpr unsigned long kRequestTimeoutMs = 10000;
@@ -222,6 +222,7 @@ bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km) {
   const float dist_nm = kmToNauticalMiles(fetch_radius_km);
 
   String url = s_api_base[0] != '\0' ? s_api_base : kDefaultApiBase;
+  url += "lat/";
   url += String(center_lat, 6);
   url += "/lon/";
   url += String(center_lon, 6);

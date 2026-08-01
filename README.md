@@ -61,7 +61,7 @@ The same portal runs on the setup AP and on the device’s LAN IP while connecte
 | **Display distances in miles** | Ring scale label in **mi** instead of **km** (e.g. `6mi` vs `10km`) |
 | **Show airport runways** | Major-airport runway overlay on the radar (off to hide) |
 | **Screen brightness (10-100%)** | Applies immediately on save; defaults to 100%. Handy for dimming at night. |
-| **ADS-B API base URL** | Blank (default) uses adsb.fi. Override with the base URL of any provider using the same `<base><lat>/lon/<lon>/dist/<dist_nm>` query shape and JSON response (e.g. adsb.lol, ADSBExchange, or a self-hosted equivalent) — e.g. `https://opendata.adsb.fi/api/v3/lat/` (the default) or `https://your-host/v2/lat/`. |
+| **ADS-B API base URL** | Blank (default) uses adsb.fi. Override with the base URL of any provider using the same `<base>lat/<lat>/lon/<lon>/dist/<dist_nm>` query shape and JSON response (e.g. adsb.lol, ADSBExchange, or a self-hosted equivalent) — e.g. `https://opendata.adsb.fi/api/v3/` (the default) or `https://your-host/v2/`. `lat/<lat>/lon/...` is appended automatically; don't include it. |
 
 After a reset, the device reboots and shows the setup screen immediately (no “Connecting” loop on stale credentials).
 
