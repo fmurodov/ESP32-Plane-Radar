@@ -1,11 +1,13 @@
 #include "services/adsb_client.h"
 
 #include <HTTPClient.h>
+#include <Preferences.h>
 #include <WiFiClient.h>
 #include <WiFiClientSecure.h>
 
 #include <ArduinoJson.h>
 
+#include <cmath>
 #include <cstring>
 
 #include "config.h"
@@ -14,14 +16,18 @@ namespace services::adsb {
 
 namespace {
 
-constexpr char kApiBase[] = "https://opendata.adsb.fi/api/v3/lat/";
+constexpr char kDefaultApiBase[] = "https://opendata.adsb.fi/api/v3/";
 constexpr float kKmPerNm = 1.852f;
 constexpr int kConnectAttemptMs = 200;
 constexpr unsigned long kRequestTimeoutMs = 10000;
 
+constexpr char kPrefsNamespace[] = "adsb";
+constexpr char kPrefsApiBaseKey[] = "apiBase";
+
 Aircraft s_aircraft[kMaxAircraft];
 size_t s_aircraft_count = 0;
 PollFn s_poll_fn = nullptr;
+char s_api_base[kApiBaseMaxLen] = "";
 
 void pollNetwork() {
   if (s_poll_fn != nullptr) {
@@ -86,7 +92,10 @@ bool readResponseBodyWithPoll(HTTPClient& http, String& payload) {
   return payload.length() > 0;
 }
 
-float kmToNauticalMiles(float km) { return km / kKmPerNm; }
+/** Rounded up (never down) so the fetched radius is never smaller than requested — some
+ * ADS-B API providers reject a fractional "dist"; the returned aircraft data itself is
+ * unaffected, this only ever widens the search radius by under a mile. */
+int kmToWholeNauticalMiles(float km) { return static_cast<int>(ceilf(km / kKmPerNm)); }
 
 bool readJsonFloat(const JsonObject& obj, const char* key, float* out) {
   if (obj[key].is<float>() || obj[key].is<double>() || obj[key].is<int>()) {
@@ -198,6 +207,13 @@ void fillTagFields(Aircraft* ac, const JsonObject& plane) {
   formatAltitudeTag(plane, ac->alt, sizeof(ac->alt));
 }
 
+void trimTrailingSpace(char* s) {
+  size_t n = strlen(s);
+  while (n > 0 && s[n - 1] == ' ') {
+    s[--n] = '\0';
+  }
+}
+
 }  // namespace
 
 void setPollFn(PollFn fn) { s_poll_fn = fn; }
@@ -207,14 +223,15 @@ size_t aircraftCount() { return s_aircraft_count; }
 const Aircraft* aircraftList() { return s_aircraft; }
 
 bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km) {
-  const float dist_nm = kmToNauticalMiles(fetch_radius_km);
+  const int dist_nm = kmToWholeNauticalMiles(fetch_radius_km);
 
-  String url = kApiBase;
+  String url = s_api_base[0] != '\0' ? s_api_base : kDefaultApiBase;
+  url += "lat/";
   url += String(center_lat, 6);
   url += "/lon/";
   url += String(center_lon, 6);
   url += "/dist/";
-  url += String(dist_nm, 1);
+  url += String(dist_nm);
 
   WiFiClientSecure client;
   client.setInsecure();
@@ -278,6 +295,44 @@ bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km) {
   s_aircraft_count = n;
   Serial.printf("adsb: %u aircraft\n", static_cast<unsigned>(n));
   return true;
+}
+
+void sourceInit() {
+  Preferences prefs;
+  if (!prefs.begin(kPrefsNamespace, true)) {
+    return;
+  }
+  prefs.getString(kPrefsApiBaseKey, s_api_base, sizeof(s_api_base));
+  prefs.end();
+}
+
+const char* apiBase() { return s_api_base; }
+
+void saveApiBaseFromPortal(const char* url) {
+  if (url == nullptr) {
+    url = "";
+  }
+  strncpy(s_api_base, url, sizeof(s_api_base) - 1);
+  s_api_base[sizeof(s_api_base) - 1] = '\0';
+  trimTrailingSpace(s_api_base);
+
+  Preferences prefs;
+  if (!prefs.begin(kPrefsNamespace, false)) {
+    return;
+  }
+  prefs.putString(kPrefsApiBaseKey, s_api_base);
+  prefs.end();
+
+  Serial.printf("ADS-B API base: %s\n", s_api_base[0] != '\0' ? s_api_base : kDefaultApiBase);
+}
+
+void clearApiBase() {
+  s_api_base[0] = '\0';
+  Preferences prefs;
+  if (prefs.begin(kPrefsNamespace, false)) {
+    prefs.remove(kPrefsApiBaseKey);
+    prefs.end();
+  }
 }
 
 }  // namespace services::adsb

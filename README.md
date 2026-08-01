@@ -58,9 +58,10 @@ The same portal runs on the setup AP and on the device’s LAN IP while connecte
 | Field | Purpose |
 |-------|---------|
 | **Latitude / Longitude** | Radar center and ADS-B query position (defaults in `config.h` until set) |
-| **Display distances in miles** | Ring scale label in **mi** instead of **km** (e.g. `6mi` vs `10km`) |
+| **Display distances in km** | Ring shows **nm** by default (e.g. `5nm`); check this to show **km** instead (e.g. `10km`). The ADS-B query itself always uses nm regardless of this setting — it only controls what's shown on screen. |
 | **Show airport runways** | Major-airport runway overlay on the radar (off to hide) |
 | **Screen brightness (10-100%)** | Applies immediately on save; defaults to 100%. Handy for dimming at night. |
+| **ADS-B API base URL** | Blank (default) uses adsb.fi. Override with the base URL of any provider using the same `<base>lat/<lat>/lon/<lon>/dist/<dist_nm>` query shape and JSON response (e.g. adsb.lol, ADSBExchange, or a self-hosted equivalent) — e.g. `https://opendata.adsb.fi/api/v3/` (the default) or `https://your-host/v2/`. `lat/<lat>/lon/...` is appended automatically; don't include it. |
 
 After a reset, the device reboots and shows the setup screen immediately (no “Connecting” loop on stale credentials).
 
@@ -78,12 +79,12 @@ Layout and colors: `include/ui/radar_theme.h`.
 
 | Ring 3 label | Outer radius (aircraft scale) |
 |------------|-------------------------------|
-| 5 km / 3 mi | ~6.7 km |
-| 10 km / 6 mi | ~13.3 km (default) |
-| 15 km / 9 mi | ~20 km |
-| 25 km / 16 mi | ~33.3 km |
+| 5 km / 3 nm | ~6.7 km / 3.6 nm |
+| 10 km / 5 nm | ~13.3 km / 7.2 nm (default) |
+| 15 km / 8 nm | ~20 km / 10.8 nm |
+| 25 km / 13 nm | ~33.3 km / 18 nm |
 
-Preset and miles/km choice persist across reboot (`planeradar` NVS namespace).
+Preset and nm/km display choice persist across reboot (`planeradar` NVS namespace).
 
 ### Runways
 
@@ -101,7 +102,8 @@ As range decreases (or aircraft approach), targets move inward; beyond-ring dots
 
 ### ADS-B
 
-- Source: `https://opendata.adsb.fi/api/v3/`
+- Source: [adsb.fi](https://opendata.adsb.fi/) by default, or any API-compatible provider (e.g.
+  adsb.lol, ADSBExchange, self-hosted) configured in the portal (see **Custom fields** above)
 - Fetch radius: `ui::radar::fetchRadiusKm()` — scales with the active preset to roughly the screen edge (so rim dots have data)
 - Poll interval: `kAdsbFetchIntervalMs` (5 s) in `config.h`
 - Ground aircraft hidden by default (`kAdsbShowGroundAircraft`)

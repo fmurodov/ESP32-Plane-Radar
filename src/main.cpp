@@ -32,9 +32,11 @@ void showRadarIfConnected() {
 
 void onRangeChanged() {
   char range_label[12];
+  char outer_label[12];
   ui::radar::formatCurrentRing3Label(range_label, sizeof(range_label));
-  Serial.printf("Range: %s (outer ~%.0f km)\n", range_label,
-                ui::radar::rangeCurrent().outer_km);
+  ui::radar::formatRing3Label(outer_label, sizeof(outer_label),
+                               ui::radar::rangeCurrent().outer_km, ui::radar::useNm());
+  Serial.printf("Range: %s (outer ~%s)\n", range_label, outer_label);
 
   if (g_radar_visible && WiFi.status() == WL_CONNECTED) {
     ui::radarDisplayDraw();
@@ -114,6 +116,7 @@ void setup() {
   }
   services::location::init();
   ui::radar::rangeInit();
+  services::adsb::sourceInit();
   services::adsb::setPollFn(wifiLoop);
 
   if (wifiSetupConnect()) {
