@@ -59,6 +59,11 @@ constexpr uint32_t kDisplaySpiWriteHz = 40000000;
 constexpr bool kDisplayInvert = true;
 constexpr bool kDisplayRgbOrder = true;
 
+/** Default and allowed range for the WiFi-portal brightness setting (%). */
+constexpr uint8_t kDisplayDefaultBrightnessPercent = 100;
+constexpr uint8_t kDisplayMinBrightnessPercent = 10;
+constexpr uint8_t kDisplayMaxBrightnessPercent = 100;
+
 // --- Radar center defaults (overridden via WiFi setup portal) ---
 constexpr double kDefaultRadarLat = 52.3676;
 constexpr double kDefaultRadarLon = 4.9041;

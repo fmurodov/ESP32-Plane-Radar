@@ -14,6 +14,7 @@
 #endif
 
 #include "config.h"
+#include "hardware/display.h"
 #include "services/radar_location.h"
 #include "ui/radar_range.h"
 #include "ui/status_screens.h"
@@ -84,6 +85,12 @@ char s_runways_checkbox_attrs[32] = "type=\"checkbox\"";
 WiFiManagerParameter s_param_runways("show_runways", "Show airport runways", "T", 2,
                                      s_runways_checkbox_attrs, WFM_LABEL_AFTER);
 
+constexpr int kBrightnessParamLen = 3;
+constexpr char kBrightnessInputAttrs[] =
+    " type=\"number\" min=\"10\" max=\"100\" step=\"1\"";
+WiFiManagerParameter s_param_brightness("brightness", "Screen brightness (10-100%)", "100",
+                                        kBrightnessParamLen, kBrightnessInputAttrs);
+
 void refreshPortalParamDefaults() {
   char lat_buf[kCoordParamLen + 1];
   char lon_buf[kCoordParamLen + 1];
@@ -97,6 +104,9 @@ void refreshPortalParamDefaults() {
   snprintf(s_runways_checkbox_attrs, sizeof(s_runways_checkbox_attrs),
            "type=\"checkbox\"%s", ui::radar::showRunways() ? " checked" : "");
   s_param_runways.setValue("T", 2);
+  char brightness_buf[kBrightnessParamLen + 1];
+  snprintf(brightness_buf, sizeof(brightness_buf), "%u", displayBrightnessPercent());
+  s_param_brightness.setValue(brightness_buf, kBrightnessParamLen);
 }
 
 void onPortalParamsSaved() {
@@ -106,6 +116,7 @@ void onPortalParamsSaved() {
   }
   ui::radar::saveMilesFromPortal(s_param_miles.getValue());
   ui::radar::saveRunwaysFromPortal(s_param_runways.getValue());
+  displaySaveBrightnessFromPortal(s_param_brightness.getValue());
 }
 
 void attachPortalParams(WiFiManager& wm) {
@@ -114,6 +125,7 @@ void attachPortalParams(WiFiManager& wm) {
   wm.addParameter(&s_param_lon);
   wm.addParameter(&s_param_miles);
   wm.addParameter(&s_param_runways);
+  wm.addParameter(&s_param_brightness);
   wm.setSaveParamsCallback(onPortalParamsSaved);
 }
 
@@ -191,7 +203,8 @@ void resetWifiCredentials() {
   eraseWifiCredentials();
   services::location::clear();
   ui::radar::unitsReset();
-  Serial.println("WiFi credentials, location, and units cleared");
+  displayResetBrightness();
+  Serial.println("WiFi credentials, location, units, and brightness cleared");
 }
 
 void onConfigPortalApStarted(WiFiManager*) {
