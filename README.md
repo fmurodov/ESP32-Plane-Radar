@@ -2,9 +2,9 @@
 
 <img width="800" height="450" alt="plane-radar" src="https://github.com/user-attachments/assets/716d0992-dab8-47ba-8f1a-2aec7f607419" />
 
-**3D printed case (STL + assembly):** [MakerWorld](https://makerworld.com/en/models/2872376-esp32-plane-radar-live-ads-b-on-a-round-display#profileId-3207083) · **Firmware:** [Releases](https://github.com/MatixYo/ESP32-Plane-Radar/releases)
+**3D printed case (STL + assembly):** [MakerWorld](https://makerworld.com/en/models/2872376-esp32-plane-radar-live-ads-b-on-a-round-display#profileId-3207083) · **Firmware:** [Releases](https://github.com/fmurodov/ESP32-Plane-Radar/releases)
 
-Firmware for an **ESP32-C3 Super Mini** and a **1.28″ round GC9A01** display (240×240). Shows a circular **ADS-B radar** around your configured location, with **WiFiManager** for first-time setup.
+Firmware for a **1.28″ round GC9A01** display (240×240), on either an **ESP32-C3 Super Mini** (bare display module, manual wiring) or a **Seeed XIAO ESP32-C6** with the **Seeed "Round Display for XIAO"** (direct plug-in connector). Shows a circular **ADS-B radar** around your configured location, with **WiFiManager** for first-time setup.
 
 ## What it does
 
@@ -18,9 +18,25 @@ After Wi‑Fi is saved, the device reconnects automatically; the radar runs in t
 | Action | Effect |
 |--------|--------|
 | **Short tap** | Cycle range preset (5 → 10 → 15 → 25 km); saved to flash |
-| **Hold 3 s** | Clear Wi‑Fi, location, and units; reboot into setup portal |
+| **Hold 3 s** | Clear Wi‑Fi, location, units, and brightness; reboot into setup portal |
 
 During setup you can also hold BOOT at power-on to force a credential reset (same as the long press).
+
+### Touch controls (Round Display for XIAO only)
+
+The XIAO C6 build also reads the display's built-in CHSC6X touch panel; tap zones relative to
+screen center (whichever axis has the bigger offset from center wins, so taps aren't ambiguous):
+
+| Zone | Effect |
+|------|--------|
+| **Left** | Range preset: zoom out (wider area) |
+| **Right** | Range preset: zoom in (tighter area) |
+| **Top** | Brightness +10% |
+| **Bottom** | Brightness −10% |
+
+No touch hardware on the Super Mini build, so this is a no-op there. Zone boundaries haven't been
+verified on real hardware yet — if left/right or top/bottom feel swapped or rotated, it's likely an
+`offset_rotation` tweak needed on the touch config in `lgfx_config.hpp`.
 
 ## Wi‑Fi setup portal
 
@@ -44,6 +60,7 @@ The same portal runs on the setup AP and on the device’s LAN IP while connecte
 | **Latitude / Longitude** | Radar center and ADS-B query position (defaults in `config.h` until set) |
 | **Display distances in miles** | Ring scale label in **mi** instead of **km** (e.g. `6mi` vs `10km`) |
 | **Show airport runways** | Major-airport runway overlay on the radar (off to hide) |
+| **Screen brightness (10-100%)** | Applies immediately on save; defaults to 100%. Handy for dimming at night. |
 
 After a reset, the device reboots and shows the setup screen immediately (no “Connecting” loop on stale credentials).
 
@@ -138,7 +155,9 @@ src/
   services/
 ```
 
-## Wiring (GC9A01 ↔ ESP32-C3 Super Mini)
+## Wiring
+
+### GC9A01 ↔ ESP32-C3 Super Mini
 
 | Display | ESP32-C3 |
 |---------|----------|
@@ -151,24 +170,58 @@ src/
 | SCL (SCLK) | GPIO **4** |
 | BOOT (user) | GPIO **9** |
 
+### Round Display for XIAO ↔ Seeed XIAO ESP32-C6
+
+Plugs directly onto the XIAO via its onboard connector — no manual wiring. Pin mapping below is for
+reference/troubleshooting only (from Seeed's `Seeed_Arduino_RoundDisplay` reference driver):
+
+| Display signal | XIAO pin | ESP32-C6 GPIO |
+|---|---|---|
+| LCD CS | D1 | GPIO1 |
+| LCD DC | D3 | GPIO21 |
+| LCD RST | — | none (software reset only) |
+| SCLK | D8 | GPIO19 |
+| MOSI | D10 | GPIO18 |
+| MISO | D9 | GPIO20 (unused) |
+| Backlight enable | D6 | GPIO16 |
+| BOOT (user) | — | GPIO9 (onboard XIAO button) |
+
+> **Board switch:** the display has a 2-position slide switch (labeled **ON** / **KE**, near the
+> microSD slot) with both slides needing to be set to their enabled side. Either slide left on the
+> "digital" side disconnects D6 (backlight) and/or A0 (battery-voltage sense) and frees them as
+> plain GPIO instead — if screen brightness doesn't respond to the portal setting at all (works in
+> serial log, no visible change), check this switch first before suspecting firmware.
+
+The display also carries a PCF8563 RTC on the same shared I2C bus (SDA = D4/GPIO22, SCL =
+D5/GPIO23) — not currently used by this firmware. The CHSC6X touch controller (also on this bus,
+INT = D7/GPIO17) *is* used — see [Touch controls](#touch-controls-round-display-for-xiao-only) above.
+
+> Confirmed working on real hardware: display, WiFi, and brightness. Touch is new and not yet
+> tested on hardware. If colors look inverted or swapped, adjust `kDisplayInvert` /
+> `kDisplayRgbOrder` in `config.h`.
+
 ## Build
 
 ```bash
-pio run -t upload
+pio run -t upload -e supermini        # ESP32-C3 Super Mini + bare GC9A01
+pio run -t upload -e xiao_c6_round    # XIAO ESP32-C6 + Round Display for XIAO
 pio device monitor
 ```
 
-- PlatformIO env: **`supermini`**
 - Serial: **115200** baud
-- USB CDC on boot enabled in `platformio.ini` for the Super Mini
+- USB CDC on boot is enabled for both boards (native USB)
+- `xiao_c6_round` uses the [pioarduino](https://github.com/pioarduino/platform-espressif32) platform
+  fork, since the official PlatformIO `espressif32` platform has no Arduino-framework support for
+  ESP32-C6 yet
 
 ### Web-flashable release image
 
-Single `.bin` for [esptool-js](https://espressif.github.io/esptool-js/) and similar tools (ESP32-C3, 4 MB, flash at **0x0**):
+Single `.bin` for [esptool-js](https://espressif.github.io/esptool-js/) and similar tools (4 MB flash, flash at **0x0**):
 
 ```bash
 chmod +x scripts/merge-firmware.sh   # once
-./scripts/merge-firmware.sh
+./scripts/merge-firmware.sh                       # defaults to supermini (ESP32-C3, 4 MB)
+./scripts/merge-firmware.sh --env xiao_c6_round   # ESP32-C6, 4 MB
 ```
 
 Writes `release/plane-radar-merged.bin`. Skip rebuild if firmware is already built:
@@ -177,7 +230,7 @@ Writes `release/plane-radar-merged.bin`. Skip rebuild if firmware is already bui
 ./scripts/merge-firmware.sh --no-build
 ```
 
-Or via PlatformIO only (output: `.pio/build/supermini/firmware-merged.bin`):
+Or via PlatformIO only (output: `.pio/build/<env>/firmware-merged.bin`):
 
 ```bash
 pio run -e supermini
@@ -190,8 +243,8 @@ Put the board in download mode (hold **BOOT**, tap **RESET**), then flash with C
 
 | Workflow | When | Output |
 |----------|------|--------|
-| [Build](.github/workflows/build.yml) | Push / PR to `main` | Artifact `plane-radar-supermini` (merged + split `.bin` files, ~90 days) |
-| [Release](.github/workflows/release.yml) | Git tag `v*` (e.g. `v1.0.0`) | GitHub Release asset `plane-radar-v1.0.0.bin` + `.sha256` |
+| [Build](.github/workflows/build.yml) | Push / PR to `main` | Artifacts `plane-radar-supermini` and `plane-radar-xiao-c6-round` (merged + split `.bin` files, ~90 days) |
+| [Release](.github/workflows/release.yml) | Git tag `v*` (e.g. `v1.0.0`) | GitHub Release assets `plane-radar-v1.0.0.bin` (Super Mini) and `plane-radar-v1.0.0-xiao-c6-round.bin`, each with a `.sha256` |
 
 To ship a version users can download:
 
@@ -200,10 +253,15 @@ git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The release workflow builds firmware in CI and attaches the merged image to the release. Download from **Releases** on GitHub, then flash at **0x0** (ESP32-C3, 4 MB).
+The release workflow builds both firmwares in CI and attaches the merged images to the release.
+Download the one matching your board from **Releases** on GitHub, then flash at **0x0** (4 MB flash).
 
 ## Dependencies
 
 - [LovyanGFX](https://github.com/lovyan03/LovyanGFX)
 - [WiFiManager](https://github.com/tzapu/WiFiManager)
 - [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+
+---
+
+This project is a fork of [MatixYo/ESP32-Plane-Radar](https://github.com/MatixYo/ESP32-Plane-Radar).

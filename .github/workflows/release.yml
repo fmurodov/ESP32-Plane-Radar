@@ -38,8 +38,10 @@ jobs:
 
       - name: Build and merge
         run: |
-          pio run -e supermini
-          pio run -t merge -e supermini
+          for env in supermini xiao_c6_round; do
+            pio run -e "$env"
+            pio run -t merge -e "$env"
+          done
 
       - name: Package release files
         run: |
@@ -48,8 +50,14 @@ jobs:
             VERSION="manual-${GITHUB_SHA::7}"
           fi
           mkdir -p dist
+
+          # Kept unsuffixed for backwards compatibility with existing download links.
           cp .pio/build/supermini/firmware-merged.bin "dist/plane-radar-${VERSION}.bin"
           sha256sum "dist/plane-radar-${VERSION}.bin" > "dist/plane-radar-${VERSION}.bin.sha256"
+
+          cp .pio/build/xiao_c6_round/firmware-merged.bin "dist/plane-radar-${VERSION}-xiao-c6-round.bin"
+          sha256sum "dist/plane-radar-${VERSION}-xiao-c6-round.bin" > "dist/plane-radar-${VERSION}-xiao-c6-round.bin.sha256"
+
           echo "version=${VERSION}" >> "$GITHUB_ENV"
 
       - name: Publish GitHub Release
