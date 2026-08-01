@@ -7,6 +7,7 @@
 
 #include <ArduinoJson.h>
 
+#include <cmath>
 #include <cstring>
 
 #include "config.h"
@@ -91,7 +92,10 @@ bool readResponseBodyWithPoll(HTTPClient& http, String& payload) {
   return payload.length() > 0;
 }
 
-float kmToNauticalMiles(float km) { return km / kKmPerNm; }
+/** Rounded up (never down) so the fetched radius is never smaller than requested — some
+ * ADS-B API providers reject a fractional "dist"; the returned aircraft data itself is
+ * unaffected, this only ever widens the search radius by under a mile. */
+int kmToWholeNauticalMiles(float km) { return static_cast<int>(ceilf(km / kKmPerNm)); }
 
 bool readJsonFloat(const JsonObject& obj, const char* key, float* out) {
   if (obj[key].is<float>() || obj[key].is<double>() || obj[key].is<int>()) {
@@ -219,7 +223,7 @@ size_t aircraftCount() { return s_aircraft_count; }
 const Aircraft* aircraftList() { return s_aircraft; }
 
 bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km) {
-  const float dist_nm = kmToNauticalMiles(fetch_radius_km);
+  const int dist_nm = kmToWholeNauticalMiles(fetch_radius_km);
 
   String url = s_api_base[0] != '\0' ? s_api_base : kDefaultApiBase;
   url += "lat/";
@@ -227,7 +231,7 @@ bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km) {
   url += "/lon/";
   url += String(center_lon, 6);
   url += "/dist/";
-  url += String(dist_nm, 1);
+  url += String(dist_nm);
 
   WiFiClientSecure client;
   client.setInsecure();
