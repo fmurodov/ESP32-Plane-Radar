@@ -72,6 +72,14 @@ void displaySaveBrightnessFromPortal(const char* value) {
   Serial.printf("Brightness: %u%%\n", s_brightness_percent);
 }
 
+void displayAdjustBrightness(int delta_percent) {
+  s_brightness_percent = clampBrightnessPercent(
+      static_cast<int>(s_brightness_percent) + delta_percent);
+  applyBrightness();
+  saveBrightness();
+  Serial.printf("Brightness: %u%%\n", s_brightness_percent);
+}
+
 void displayResetBrightness() {
   s_brightness_percent = config::kDisplayDefaultBrightnessPercent;
   applyBrightness();

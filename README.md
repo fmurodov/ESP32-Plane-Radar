@@ -22,6 +22,22 @@ After Wi‑Fi is saved, the device reconnects automatically; the radar runs in t
 
 During setup you can also hold BOOT at power-on to force a credential reset (same as the long press).
 
+### Touch controls (Round Display for XIAO only)
+
+The XIAO C6 build also reads the display's built-in CHSC6X touch panel; tap zones relative to
+screen center (whichever axis has the bigger offset from center wins, so taps aren't ambiguous):
+
+| Zone | Effect |
+|------|--------|
+| **Left** | Range preset: zoom out (wider area) |
+| **Right** | Range preset: zoom in (tighter area) |
+| **Top** | Brightness +10% |
+| **Bottom** | Brightness −10% |
+
+No touch hardware on the Super Mini build, so this is a no-op there. Zone boundaries haven't been
+verified on real hardware yet — if left/right or top/bottom feel swapped or rotated, it's likely an
+`offset_rotation` tweak needed on the touch config in `lgfx_config.hpp`.
+
 ## Wi‑Fi setup portal
 
 **First-time setup** (no saved Wi‑Fi):
@@ -170,11 +186,13 @@ reference/troubleshooting only (from Seeed's `Seeed_Arduino_RoundDisplay` refere
 | Backlight enable | D6 | GPIO16 |
 | BOOT (user) | — | GPIO9 (onboard XIAO button) |
 
-The display also carries a CHSC6X capacitive touch controller and a PCF8563 RTC on a shared I2C bus
-(SDA = D4/GPIO22, SCL = D5/GPIO23, touch INT = D7/GPIO17) — not currently used by this firmware.
+The display also carries a PCF8563 RTC on the same shared I2C bus (SDA = D4/GPIO22, SCL =
+D5/GPIO23) — not currently used by this firmware. The CHSC6X touch controller (also on this bus,
+INT = D7/GPIO17) *is* used — see [Touch controls](#touch-controls-round-display-for-xiao-only) above.
 
-> This board/display combo builds cleanly but hasn't been tested on real hardware yet. If colors look
-> inverted or swapped, adjust `kDisplayInvert` / `kDisplayRgbOrder` in `config.h`.
+> Confirmed working on real hardware: display and WiFi. Touch is new and not yet tested on
+> hardware. If colors look inverted or swapped, adjust `kDisplayInvert` / `kDisplayRgbOrder` in
+> `config.h`.
 
 ## Build
 

@@ -30,8 +30,7 @@ void showRadarIfConnected() {
   g_radar_visible = true;
 }
 
-void onRangeTap() {
-  ui::radar::rangeNext();
+void onRangeChanged() {
   char range_label[12];
   ui::radar::formatCurrentRing3Label(range_label, sizeof(range_label));
   Serial.printf("Range: %s (outer ~%.0f km)\n", range_label,
@@ -42,10 +41,50 @@ void onRangeTap() {
   }
 }
 
+void onRangeTap() {
+  ui::radar::rangeNext();
+  onRangeChanged();
+}
+
 void handleBootButton() {
   bootButtonPollLongPress();
   if (bootButtonConsumeTap()) {
     onRangeTap();
+  }
+}
+
+/**
+ * Touch zones on the round display (Round Display for XIAO only — getTouch() is a
+ * harmless no-op on boards without touch hardware): left/right of center steps the range
+ * preset (zoom out/in), top/bottom adjusts brightness. Whichever axis has the larger
+ * offset from center wins, so a tap is never ambiguous between the two.
+ */
+void handleTouch() {
+  static bool s_touch_active = false;
+  int32_t x = 0;
+  int32_t y = 0;
+  const bool touched = tft.getTouch(&x, &y) > 0;
+  if (!touched) {
+    s_touch_active = false;
+    return;
+  }
+  if (s_touch_active) {
+    return;
+  }
+  s_touch_active = true;
+
+  const int32_t dx = x - config::kDisplayWidth / 2;
+  const int32_t dy = y - config::kDisplayHeight / 2;
+  if (abs(dx) > abs(dy)) {
+    if (dx > 0) {
+      ui::radar::rangeNext();
+    } else {
+      ui::radar::rangePrev();
+    }
+    onRangeChanged();
+  } else {
+    displayAdjustBrightness(dy < 0 ? config::kTouchBrightnessStepPercent
+                                    : -config::kTouchBrightnessStepPercent);
   }
 }
 
@@ -84,6 +123,7 @@ void setup() {
 
 void loop() {
   handleBootButton();
+  handleTouch();
   wifiLoop();
 
   if (WiFi.status() != WL_CONNECTED) {

@@ -72,6 +72,15 @@ constexpr int kDisplayRotation = 0;
 constexpr int kDisplayWidth = 240;
 constexpr int kDisplayHeight = 240;
 
+// --- Touch: CHSC6X capacitive touch on the Round Display for XIAO (I2C) ---
+#if defined(PLANE_RADAR_BOARD_XIAO_C6_ROUND)
+constexpr gpio_num_t kTouchPinSda = GPIO_NUM_22;  // XIAO D4
+constexpr gpio_num_t kTouchPinScl = GPIO_NUM_23;  // XIAO D5
+constexpr gpio_num_t kTouchPinInt = GPIO_NUM_17;  // XIAO D7
+#endif
+/** Brightness change per tap in the top/bottom touch zones. */
+constexpr int kTouchBrightnessStepPercent = 10;
+
 constexpr uint32_t kDisplaySpiWriteHz = 40000000;
 // GC9A01 modules often need invert + BGR for correct black/green output
 constexpr bool kDisplayInvert = true;

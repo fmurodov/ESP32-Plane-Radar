@@ -3,6 +3,10 @@
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
 
+#if defined(PLANE_RADAR_BOARD_XIAO_C6_ROUND)
+#include <driver/i2c.h>
+#endif
+
 #include "config.h"
 
 /** LovyanGFX device: GC9A01 on SPI. Pin values come from config.h. */
@@ -10,6 +14,9 @@ class LGFX : public lgfx::LGFX_Device {
   lgfx::Bus_SPI _bus;
   lgfx::Panel_GC9A01 _panel;
   lgfx::Light_PWM _light;
+#if defined(PLANE_RADAR_BOARD_XIAO_C6_ROUND)
+  lgfx::Touch_CHSC6X _touch;
+#endif
 
 public:
   LGFX() {
@@ -40,6 +47,21 @@ public:
       _light.config(cfg);
       _panel.setLight(&_light);
     }
+#if defined(PLANE_RADAR_BOARD_XIAO_C6_ROUND)
+    {
+      auto cfg = _touch.config();
+      cfg.i2c_port = I2C_NUM_0;
+      cfg.pin_sda = static_cast<int>(config::kTouchPinSda);
+      cfg.pin_scl = static_cast<int>(config::kTouchPinScl);
+      cfg.pin_int = static_cast<int>(config::kTouchPinInt);
+      cfg.x_min = 0;
+      cfg.x_max = config::kDisplayWidth - 1;
+      cfg.y_min = 0;
+      cfg.y_max = config::kDisplayHeight - 1;
+      _touch.config(cfg);
+      _panel.setTouch(&_touch);
+    }
+#endif
     setPanel(&_panel);
   }
 };
