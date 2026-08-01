@@ -9,6 +9,7 @@
 class LGFX : public lgfx::LGFX_Device {
   lgfx::Bus_SPI _bus;
   lgfx::Panel_GC9A01 _panel;
+  lgfx::Light_PWM _light;
 
 public:
   LGFX() {
@@ -30,6 +31,14 @@ public:
       cfg.invert = config::kDisplayInvert;
       cfg.rgb_order = config::kDisplayRgbOrder;
       _panel.config(cfg);
+    }
+    // Boards with a GPIO-gated backlight (e.g. Round Display for XIAO); bare
+    // GC9A01 modules with BL tied straight to 3V3 leave this pin unset (-1).
+    if constexpr (config::kDisplayPinBl != GPIO_NUM_NC) {
+      auto cfg = _light.config();
+      cfg.pin_bl = static_cast<int16_t>(config::kDisplayPinBl);
+      _light.config(cfg);
+      _panel.setLight(&_light);
     }
     setPanel(&_panel);
   }

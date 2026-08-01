@@ -54,4 +54,8 @@ fi
 mkdir -p "$(dirname "$OUT")"
 cp "$MERGED" "$OUT"
 echo "Wrote ${OUT}"
-echo "Flash at offset 0x0 with chip ESP32-C3, 4MB flash (Web Serial flasher)."
+if [[ "$ENV" == "xiao_c6_round" ]]; then
+  echo "Flash at offset 0x0 with chip ESP32-C6, 4MB flash (Web Serial flasher)."
+else
+  echo "Flash at offset 0x0 with chip ESP32-C3, 4MB flash (Web Serial flasher)."
+fi

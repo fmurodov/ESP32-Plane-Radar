@@ -30,11 +30,24 @@ constexpr unsigned long kBootResetHoldMs = 3000UL;
 constexpr unsigned long kBootTapMinMs = 40UL;
 
 // --- Display: GC9A01 1.28" round 240×240 (SPI) ---
+#if defined(PLANE_RADAR_BOARD_XIAO_C6_ROUND)
+// Seeed "Round Display for XIAO" plugged directly onto a XIAO ESP32-C6
+// (pins per Seeed_Arduino_RoundDisplay reference driver, mapped to ESP32-C6 GPIOs)
+constexpr gpio_num_t kDisplayPinRst = GPIO_NUM_NC;   // no dedicated line; GC9A01 software reset only
+constexpr gpio_num_t kDisplayPinCs = GPIO_NUM_1;     // XIAO D1
+constexpr gpio_num_t kDisplayPinDc = GPIO_NUM_21;    // XIAO D3
+constexpr gpio_num_t kDisplayPinMosi = GPIO_NUM_18;  // XIAO D10
+constexpr gpio_num_t kDisplayPinSclk = GPIO_NUM_19;  // XIAO D8
+constexpr gpio_num_t kDisplayPinBl = GPIO_NUM_16;    // XIAO D6, backlight enable (active HIGH)
+#else
+// Bare GC9A01 module manually wired to an ESP32-C3 Super Mini
 constexpr gpio_num_t kDisplayPinRst = GPIO_NUM_0;
 constexpr gpio_num_t kDisplayPinCs = GPIO_NUM_1;
 constexpr gpio_num_t kDisplayPinDc = GPIO_NUM_10;
 constexpr gpio_num_t kDisplayPinMosi = GPIO_NUM_3;  // display SDA
 constexpr gpio_num_t kDisplayPinSclk = GPIO_NUM_4;  // display SCL
+constexpr gpio_num_t kDisplayPinBl = GPIO_NUM_NC;   // backlight tied directly to 3V3
+#endif
 
 constexpr int kDisplayWidth = 240;
 constexpr int kDisplayHeight = 240;

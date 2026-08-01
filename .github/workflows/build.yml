@@ -14,6 +14,14 @@ concurrency:
 jobs:
   firmware:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - env: supermini
+            artifact: plane-radar-supermini
+          - env: xiao_c6_round
+            artifact: plane-radar-xiao-c6-round
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,9 +33,9 @@ jobs:
             ~/.cache/pip
             ~/.platformio/.cache
             .pio/libdeps
-          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          key: ${{ runner.os }}-pio-${{ matrix.env }}-${{ hashFiles('platformio.ini') }}
           restore-keys: |
-            ${{ runner.os }}-pio-
+            ${{ runner.os }}-pio-${{ matrix.env }}-
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -38,18 +46,18 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Build
-        run: pio run -e supermini
+        run: pio run -e ${{ matrix.env }}
 
       - name: Merge web-flash image
-        run: pio run -t merge -e supermini
+        run: pio run -t merge -e ${{ matrix.env }}
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: plane-radar-supermini
+          name: ${{ matrix.artifact }}
           if-no-files-found: error
           path: |
-            .pio/build/supermini/firmware-merged.bin
-            .pio/build/supermini/firmware.bin
-            .pio/build/supermini/bootloader.bin
-            .pio/build/supermini/partitions.bin
+            .pio/build/${{ matrix.env }}/firmware-merged.bin
+            .pio/build/${{ matrix.env }}/firmware.bin
+            .pio/build/${{ matrix.env }}/bootloader.bin
+            .pio/build/${{ matrix.env }}/partitions.bin
