@@ -16,7 +16,7 @@ struct Aircraft {
 };
 
 constexpr size_t kMaxAircraft = 64;
-constexpr size_t kLocalUrlMaxLen = 96;
+constexpr size_t kApiBaseMaxLen = 96;
 
 size_t aircraftCount();
 const Aircraft* aircraftList();
@@ -25,17 +25,20 @@ const Aircraft* aircraftList();
 using PollFn = void (*)();
 void setPollFn(PollFn fn);
 
-/** Fetch aircraft within fetch_radius_km of center_lat/lon: adsb.fi, or a local
- * receiver's aircraft.json if one is configured (see localUrl()). */
+/** Fetch aircraft within fetch_radius_km of center_lat/lon, appending
+ * "<lat>/lon/<lon>/dist/<dist_nm>" to the configured API base (see apiBase()). */
 bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km);
 
-/** Load saved local-receiver URL from NVS, or empty (use adsb.fi). Call once before WiFi setup. */
+/** Load saved API base URL from NVS, or empty (use the default, adsb.fi). Call once before
+ * WiFi setup. */
 void sourceInit();
-/** Empty = adsb.fi; non-empty = full URL to a local readsb/dump1090 aircraft.json. */
-const char* localUrl();
-/** WiFi portal text field: local receiver aircraft.json URL, or empty to use adsb.fi. */
-void saveLocalUrlFromPortal(const char* url);
-/** Clear the local URL override (e.g. with WiFi credential reset). */
-void clearLocalUrl();
+/** Empty = default (adsb.fi); non-empty = base URL up to and including ".../lat/" for any
+ * provider using the same "<base><lat>/lon/<lon>/dist/<dist_nm>" query shape and JSON schema
+ * (e.g. a self-hosted adsb.fi/adsb.lol-API-compatible service). */
+const char* apiBase();
+/** WiFi portal text field: API base URL override, or empty to use the default. */
+void saveApiBaseFromPortal(const char* url);
+/** Clear the API base override (e.g. with WiFi credential reset). */
+void clearApiBase();
 
 }  // namespace services::adsb

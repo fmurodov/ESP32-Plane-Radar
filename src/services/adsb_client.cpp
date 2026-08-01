@@ -7,7 +7,6 @@
 
 #include <ArduinoJson.h>
 
-#include <cmath>
 #include <cstring>
 
 #include "config.h"
@@ -16,19 +15,18 @@ namespace services::adsb {
 
 namespace {
 
-constexpr char kApiBase[] = "https://opendata.adsb.fi/api/v3/lat/";
+constexpr char kDefaultApiBase[] = "https://opendata.adsb.fi/api/v3/lat/";
 constexpr float kKmPerNm = 1.852f;
-constexpr float kKmPerDegLat = 111.32f;
 constexpr int kConnectAttemptMs = 200;
 constexpr unsigned long kRequestTimeoutMs = 10000;
 
 constexpr char kPrefsNamespace[] = "adsb";
-constexpr char kPrefsLocalUrlKey[] = "url";
+constexpr char kPrefsApiBaseKey[] = "apiBase";
 
 Aircraft s_aircraft[kMaxAircraft];
 size_t s_aircraft_count = 0;
 PollFn s_poll_fn = nullptr;
-char s_local_url[kLocalUrlMaxLen] = "";
+char s_api_base[kApiBaseMaxLen] = "";
 
 void pollNetwork() {
   if (s_poll_fn != nullptr) {
@@ -205,18 +203,34 @@ void fillTagFields(Aircraft* ac, const JsonObject& plane) {
   formatAltitudeTag(plane, ac->alt, sizeof(ac->alt));
 }
 
-/** Flat-earth approximation; plenty accurate at radar range (tens of km). */
-float approxDistanceKm(double center_lat, double center_lon, float lat, float lon) {
-  const float lat_rad = static_cast<float>(center_lat) * (3.14159265f / 180.0f);
-  const float dlat_km = (lat - static_cast<float>(center_lat)) * kKmPerDegLat;
-  const float dlon_km = (lon - static_cast<float>(center_lon)) * kKmPerDegLat * cosf(lat_rad);
-  return sqrtf(dlat_km * dlat_km + dlon_km * dlon_km);
+void trimTrailingSpace(char* s) {
+  size_t n = strlen(s);
+  while (n > 0 && s[n - 1] == ' ') {
+    s[--n] = '\0';
+  }
 }
 
-/** Shared GET+read+parse; NetClient concrete type picks the right HTTPClient::begin() overload
- * (WiFiClient for local/plain-HTTP, WiFiClientSecure for adsb.fi/HTTPS). */
-template <typename NetClient>
-bool fetchJson(NetClient& client, const String& url, JsonDocument& doc) {
+}  // namespace
+
+void setPollFn(PollFn fn) { s_poll_fn = fn; }
+
+size_t aircraftCount() { return s_aircraft_count; }
+
+const Aircraft* aircraftList() { return s_aircraft; }
+
+bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km) {
+  const float dist_nm = kmToNauticalMiles(fetch_radius_km);
+
+  String url = s_api_base[0] != '\0' ? s_api_base : kDefaultApiBase;
+  url += String(center_lat, 6);
+  url += "/lon/";
+  url += String(center_lon, 6);
+  url += "/dist/";
+  url += String(dist_nm, 1);
+
+  WiFiClientSecure client;
+  client.setInsecure();
+
   HTTPClient http;
   if (!http.begin(client, url)) {
     Serial.println("adsb: http.begin failed");
@@ -239,59 +253,14 @@ bool fetchJson(NetClient& client, const String& url, JsonDocument& doc) {
   }
   http.end();
 
+  JsonDocument doc;
   const DeserializationError err = deserializeJson(doc, payload);
   if (err) {
     Serial.printf("adsb: JSON parse error: %s\n", err.c_str());
     return false;
   }
-  return true;
-}
 
-void trimTrailingSpace(char* s) {
-  size_t n = strlen(s);
-  while (n > 0 && s[n - 1] == ' ') {
-    s[--n] = '\0';
-  }
-}
-
-}  // namespace
-
-void setPollFn(PollFn fn) { s_poll_fn = fn; }
-
-size_t aircraftCount() { return s_aircraft_count; }
-
-const Aircraft* aircraftList() { return s_aircraft; }
-
-bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km) {
-  const bool use_local = s_local_url[0] != '\0';
-
-  JsonDocument doc;
-  bool ok;
-  if (use_local) {
-    WiFiClient client;
-    ok = fetchJson(client, String(s_local_url), doc);
-  } else {
-    String url = kApiBase;
-    url += String(center_lat, 6);
-    url += "/lon/";
-    url += String(center_lon, 6);
-    url += "/dist/";
-    url += String(kmToNauticalMiles(fetch_radius_km), 1);
-
-    WiFiClientSecure client;
-    client.setInsecure();
-    ok = fetchJson(client, url, doc);
-  }
-  if (!ok) {
-    return false;
-  }
-
-  // adsb.fi wraps results as {"ac": [...]}; a local readsb/dump1090 aircraft.json uses
-  // {"aircraft": [...]} instead — same per-aircraft field names either way.
   JsonArray ac = doc["ac"].as<JsonArray>();
-  if (ac.isNull()) {
-    ac = doc["aircraft"].as<JsonArray>();
-  }
   if (ac.isNull()) {
     s_aircraft_count = 0;
     return true;
@@ -309,17 +278,8 @@ bool fetchUpdate(double center_lat, double center_lon, float fetch_radius_km) {
       continue;
     }
 
-    const float lat = plane["lat"].as<float>();
-    const float lon = plane["lon"].as<float>();
-    // adsb.fi already filters server-side; a local receiver returns everything it can hear
-    // (often far past our max radar range), so this filter is load-bearing for that source
-    // and a harmless no-op for adsb.fi.
-    if (approxDistanceKm(center_lat, center_lon, lat, lon) > fetch_radius_km) {
-      continue;
-    }
-
-    s_aircraft[n].lat = lat;
-    s_aircraft[n].lon = lon;
+    s_aircraft[n].lat = plane["lat"].as<float>();
+    s_aircraft[n].lon = plane["lon"].as<float>();
     s_aircraft[n].nose_deg = pickNoseHeading(plane);
     s_aircraft[n].track_deg = pickTrackHeading(plane);
     s_aircraft[n].gs_knots = pickGroundSpeed(plane);
@@ -337,35 +297,35 @@ void sourceInit() {
   if (!prefs.begin(kPrefsNamespace, true)) {
     return;
   }
-  prefs.getString(kPrefsLocalUrlKey, s_local_url, sizeof(s_local_url));
+  prefs.getString(kPrefsApiBaseKey, s_api_base, sizeof(s_api_base));
   prefs.end();
 }
 
-const char* localUrl() { return s_local_url; }
+const char* apiBase() { return s_api_base; }
 
-void saveLocalUrlFromPortal(const char* url) {
+void saveApiBaseFromPortal(const char* url) {
   if (url == nullptr) {
     url = "";
   }
-  strncpy(s_local_url, url, sizeof(s_local_url) - 1);
-  s_local_url[sizeof(s_local_url) - 1] = '\0';
-  trimTrailingSpace(s_local_url);
+  strncpy(s_api_base, url, sizeof(s_api_base) - 1);
+  s_api_base[sizeof(s_api_base) - 1] = '\0';
+  trimTrailingSpace(s_api_base);
 
   Preferences prefs;
   if (!prefs.begin(kPrefsNamespace, false)) {
     return;
   }
-  prefs.putString(kPrefsLocalUrlKey, s_local_url);
+  prefs.putString(kPrefsApiBaseKey, s_api_base);
   prefs.end();
 
-  Serial.printf("ADS-B source: %s\n", s_local_url[0] != '\0' ? s_local_url : "adsb.fi");
+  Serial.printf("ADS-B API base: %s\n", s_api_base[0] != '\0' ? s_api_base : kDefaultApiBase);
 }
 
-void clearLocalUrl() {
-  s_local_url[0] = '\0';
+void clearApiBase() {
+  s_api_base[0] = '\0';
   Preferences prefs;
   if (prefs.begin(kPrefsNamespace, false)) {
-    prefs.remove(kPrefsLocalUrlKey);
+    prefs.remove(kPrefsApiBaseKey);
     prefs.end();
   }
 }

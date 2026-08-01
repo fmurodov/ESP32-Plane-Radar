@@ -92,8 +92,8 @@ constexpr char kBrightnessInputAttrs[] =
 WiFiManagerParameter s_param_brightness("brightness", "Screen brightness (10-100%)", "100",
                                         kBrightnessParamLen, kBrightnessInputAttrs);
 
-WiFiManagerParameter s_param_adsb_url("adsb_url", "Local ADS-B receiver aircraft.json URL (blank = adsb.fi)",
-                                      "", services::adsb::kLocalUrlMaxLen);
+WiFiManagerParameter s_param_adsb_url("adsb_url", "ADS-B API base URL (blank = adsb.fi)",
+                                      "", services::adsb::kApiBaseMaxLen);
 
 void refreshPortalParamDefaults() {
   char lat_buf[kCoordParamLen + 1];
@@ -111,7 +111,7 @@ void refreshPortalParamDefaults() {
   char brightness_buf[kBrightnessParamLen + 1];
   snprintf(brightness_buf, sizeof(brightness_buf), "%u", displayBrightnessPercent());
   s_param_brightness.setValue(brightness_buf, kBrightnessParamLen);
-  s_param_adsb_url.setValue(services::adsb::localUrl(), services::adsb::kLocalUrlMaxLen);
+  s_param_adsb_url.setValue(services::adsb::apiBase(), services::adsb::kApiBaseMaxLen);
 }
 
 void onPortalParamsSaved() {
@@ -122,7 +122,7 @@ void onPortalParamsSaved() {
   ui::radar::saveMilesFromPortal(s_param_miles.getValue());
   ui::radar::saveRunwaysFromPortal(s_param_runways.getValue());
   displaySaveBrightnessFromPortal(s_param_brightness.getValue());
-  services::adsb::saveLocalUrlFromPortal(s_param_adsb_url.getValue());
+  services::adsb::saveApiBaseFromPortal(s_param_adsb_url.getValue());
 }
 
 void attachPortalParams(WiFiManager& wm) {
@@ -211,8 +211,8 @@ void resetWifiCredentials() {
   services::location::clear();
   ui::radar::unitsReset();
   displayResetBrightness();
-  services::adsb::clearLocalUrl();
-  Serial.println("WiFi credentials, location, units, brightness, and ADS-B source cleared");
+  services::adsb::clearApiBase();
+  Serial.println("WiFi credentials, location, units, brightness, and ADS-B API base cleared");
 }
 
 void onConfigPortalApStarted(WiFiManager*) {
