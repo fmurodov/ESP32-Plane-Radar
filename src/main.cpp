@@ -8,6 +8,7 @@
 #include "config.h"
 #include "hardware/display.h"
 #include "services/adsb_client.h"
+#include "services/daynight.h"
 #include "services/radar_location.h"
 #include "services/wifi_setup.h"
 #include "ui/radar_display.h"
@@ -20,6 +21,22 @@ bool g_radar_visible = false;
 unsigned long g_wifi_down_since = 0;
 unsigned long g_last_reconnect_ms = 0;
 unsigned long g_last_adsb_fetch_ms = 0;
+unsigned long g_last_daynight_ms = 0;
+
+/** Re-evaluate day vs. night from the clock and let the display adjust auto brightness. */
+void updateDayNight() {
+  if (g_last_daynight_ms != 0 &&
+      millis() - g_last_daynight_ms < config::kDaynightPollMs) {
+    return;
+  }
+  g_last_daynight_ms = millis();
+  if (!services::daynight::timeValid()) {
+    return;
+  }
+  const double elevation = services::daynight::solarElevationDeg(
+      services::location::lat(), services::location::lon());
+  displaySetDaytime(elevation > config::kDaylightElevationDeg);
+}
 
 void showRadarIfConnected() {
   if (WiFi.status() != WL_CONNECTED) {
@@ -118,6 +135,7 @@ void setup() {
   ui::radar::rangeInit();
   services::adsb::sourceInit();
   services::adsb::setPollFn(wifiLoop);
+  services::daynight::init();
 
   if (wifiSetupConnect()) {
     showRadarIfConnected();
@@ -128,6 +146,7 @@ void loop() {
   handleBootButton();
   handleTouch();
   wifiLoop();
+  updateDayNight();
 
   if (WiFi.status() != WL_CONNECTED) {
     if (g_radar_visible) {

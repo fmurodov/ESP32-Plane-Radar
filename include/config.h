@@ -93,6 +93,20 @@ constexpr uint8_t kDisplayDefaultBrightnessPercent = 100;
 constexpr uint8_t kDisplayMinBrightnessPercent = 10;
 constexpr uint8_t kDisplayMaxBrightnessPercent = 100;
 
+// --- Auto day/night brightness ---
+// When enabled in the portal, the day/night levels replace the manual brightness, picked from the
+// sun's position at the radar location (no timezone needed — see daynight.h).
+constexpr bool kDisplayDefaultAutoBrightness = false;
+constexpr uint8_t kDisplayDefaultDayBrightnessPercent = 100;
+constexpr uint8_t kDisplayDefaultNightBrightnessPercent = 30;
+
+// --- NTP / day-night clock ---
+constexpr char kNtpServer[] = "pool.ntp.org";
+/** Sun elevation (deg) above which it counts as daytime; -0.833 = upper limb at the horizon. */
+constexpr double kDaylightElevationDeg = -0.833;
+/** How often loop() re-evaluates day vs. night. */
+constexpr unsigned long kDaynightPollMs = 60000;
+
 // --- Radar center defaults (overridden via WiFi setup portal) ---
 constexpr double kDefaultRadarLat = 52.3676;
 constexpr double kDefaultRadarLon = 4.9041;

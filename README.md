@@ -60,7 +60,9 @@ The same portal runs on the setup AP and on the device’s LAN IP while connecte
 | **Latitude / Longitude** | Radar center and ADS-B query position (defaults in `config.h` until set) |
 | **Display distances in km** | Ring shows **nm** by default (e.g. `5nm`); check this to show **km** instead (e.g. `10km`). The ADS-B query itself always uses nm regardless of this setting — it only controls what's shown on screen. |
 | **Show airport runways** | Major-airport runway overlay on the radar (off to hide) |
-| **Screen brightness (10-100%)** | Applies immediately on save; defaults to 100%. Handy for dimming at night. |
+| **Screen brightness — manual (10-100%)** | Used when auto day/night is off. Applies immediately on save; defaults to 100%. |
+| **Auto day/night brightness** | When enabled, brightness follows the sun at your location instead of the manual level — the **Day brightness** level while the sun is up, the **Night brightness** level after sunset (defaults: day 100%, night 30%). Time comes from NTP over WiFi and sunrise/sunset are computed from your latitude/longitude, so no timezone setting is needed. Off by default. |
+| **Day / Night brightness (10-100%)** | The two levels used while auto day/night is on. The touch top/bottom zones nudge whichever level is currently in effect. |
 | **ADS-B API base URL** | Blank (default) uses adsb.fi. Override with the base URL of any provider using the same `<base>lat/<lat>/lon/<lon>/dist/<dist_nm>` query shape and JSON response (e.g. adsb.lol, ADSBExchange, or a self-hosted equivalent) — e.g. `https://opendata.adsb.fi/api/v3/` (the default) or `https://your-host/v2/`. `lat/<lat>/lon/...` is appended automatically; don't include it. |
 
 After a reset, the device reboots and shows the setup screen immediately (no “Connecting” loop on stale credentials).
