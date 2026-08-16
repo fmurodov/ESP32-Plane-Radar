@@ -89,8 +89,17 @@ WiFiManagerParameter s_param_runways("show_runways", "Show airport runways", "T"
 constexpr int kBrightnessParamLen = 3;
 constexpr char kBrightnessInputAttrs[] =
     " type=\"number\" min=\"10\" max=\"100\" step=\"1\"";
-WiFiManagerParameter s_param_brightness("brightness", "Screen brightness (10-100%)", "100",
+WiFiManagerParameter s_param_brightness("brightness", "Screen brightness — manual (10-100%)", "100",
                                         kBrightnessParamLen, kBrightnessInputAttrs);
+
+char s_autobright_checkbox_attrs[32] = "type=\"checkbox\"";
+WiFiManagerParameter s_param_autobright("auto_bright",
+                                        "Auto day/night brightness (uses your location)", "T", 2,
+                                        s_autobright_checkbox_attrs, WFM_LABEL_AFTER);
+WiFiManagerParameter s_param_day_bright("day_bright", "Day brightness (10-100%)", "100",
+                                        kBrightnessParamLen, kBrightnessInputAttrs);
+WiFiManagerParameter s_param_night_bright("night_bright", "Night brightness (10-100%)", "30",
+                                          kBrightnessParamLen, kBrightnessInputAttrs);
 
 WiFiManagerParameter s_param_adsb_url("adsb_url", "ADS-B API base URL (blank = adsb.fi)",
                                       "", services::adsb::kApiBaseMaxLen);
@@ -111,6 +120,13 @@ void refreshPortalParamDefaults() {
   char brightness_buf[kBrightnessParamLen + 1];
   snprintf(brightness_buf, sizeof(brightness_buf), "%u", displayBrightnessPercent());
   s_param_brightness.setValue(brightness_buf, kBrightnessParamLen);
+  snprintf(s_autobright_checkbox_attrs, sizeof(s_autobright_checkbox_attrs),
+           "type=\"checkbox\"%s", displayAutoBrightnessEnabled() ? " checked" : "");
+  s_param_autobright.setValue("T", 2);
+  snprintf(brightness_buf, sizeof(brightness_buf), "%u", displayDayBrightnessPercent());
+  s_param_day_bright.setValue(brightness_buf, kBrightnessParamLen);
+  snprintf(brightness_buf, sizeof(brightness_buf), "%u", displayNightBrightnessPercent());
+  s_param_night_bright.setValue(brightness_buf, kBrightnessParamLen);
   s_param_adsb_url.setValue(services::adsb::apiBase(), services::adsb::kApiBaseMaxLen);
 }
 
@@ -122,6 +138,9 @@ void onPortalParamsSaved() {
   ui::radar::saveKmFromPortal(s_param_km.getValue());
   ui::radar::saveRunwaysFromPortal(s_param_runways.getValue());
   displaySaveBrightnessFromPortal(s_param_brightness.getValue());
+  displaySaveAutoBrightnessFromPortal(s_param_autobright.getValue(),
+                                      s_param_day_bright.getValue(),
+                                      s_param_night_bright.getValue());
   services::adsb::saveApiBaseFromPortal(s_param_adsb_url.getValue());
 }
 
@@ -132,6 +151,9 @@ void attachPortalParams(WiFiManager& wm) {
   wm.addParameter(&s_param_km);
   wm.addParameter(&s_param_runways);
   wm.addParameter(&s_param_brightness);
+  wm.addParameter(&s_param_autobright);
+  wm.addParameter(&s_param_day_bright);
+  wm.addParameter(&s_param_night_bright);
   wm.addParameter(&s_param_adsb_url);
   wm.setSaveParamsCallback(onPortalParamsSaved);
 }
